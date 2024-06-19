@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>IVS_API</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\CorporationElections\" />
+    <Folder Include="Controllers\Employees\" />
+    <Folder Include="Controllers\Dashboard\" />
+    <Folder Include="Controllers\Parties\" />
+    <Folder Include="Controllers\ParliamentaryElections\" />
+    <Folder Include="Controllers\StateElections\" />
+  </ItemGroup>
+
+</Project>
