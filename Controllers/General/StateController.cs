@@ -5,7 +5,7 @@ using Npgsql;
 
 namespace IVS_API.Controllers.General
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class StateController : ControllerBase
     {
@@ -27,8 +27,6 @@ namespace IVS_API.Controllers.General
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
-                        if (reader.Read())
-                        {
                             while (reader.Read())
                             {
                                 states.Add(new StateModel
@@ -38,7 +36,6 @@ namespace IVS_API.Controllers.General
                                     StateAbbreiviation = reader.GetString(reader.GetOrdinal("stateabbreviation")),
                                 });
                             }
-                        }
                     }
                 }
                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = states } });

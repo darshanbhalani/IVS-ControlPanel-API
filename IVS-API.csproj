@@ -17,9 +17,7 @@
     <Folder Include="Controllers\CorporationElections\" />
     <Folder Include="Controllers\Employees\" />
     <Folder Include="Controllers\Dashboard\" />
-    <Folder Include="Controllers\Parties\" />
     <Folder Include="Controllers\ParliamentaryElections\" />
-    <Folder Include="Controllers\StateElections\" />
   </ItemGroup>
 
 </Project>

@@ -27,8 +27,6 @@ namespace IVS_API.Controllers.General
                 {
                     cmd.Parameters.AddWithValue("stateid", stateid);
                     using(var reader = cmd.ExecuteReader()) { 
-                        if (reader.Read())
-                        {
                             while (reader.Read())
                             {
                                 districts.Add(new DistrictModel
@@ -36,7 +34,6 @@ namespace IVS_API.Controllers.General
                                     DistrictId = reader.GetInt32(reader.GetOrdinal("districtid")),
                                     DistrictName = reader.GetString(reader.GetOrdinal("districtname")),
                                 });
-                            }
                         }
                     }
                 }
