@@ -1,5 +1,6 @@
 ﻿using IVS_API.Models;
 using IVS_API.Repo.Class;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
@@ -7,6 +8,7 @@ using System.Data.Common;
 
 namespace IVS_API.Controllers.StateElections
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class AssemblyController : ControllerBase
