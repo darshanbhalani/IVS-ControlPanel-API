@@ -100,7 +100,6 @@ namespace IVS_API
                 });
             });
 
-            Console.Write("done");
 
             var app = builder.Build();
 
