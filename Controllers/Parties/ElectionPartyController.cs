@@ -32,6 +32,7 @@ namespace IVS_API.Controllers.Parties
                             {
                                 parties.Add(new ElectionPartyModel
                                 {
+                                    ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
                                     ElectionPartyLogoUrl = reader.GetString(reader.GetOrdinal("electionpartyprofileurl")),
                                     ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
                                     VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
@@ -66,6 +67,7 @@ namespace IVS_API.Controllers.Parties
                         {
                             parties.Add(new ElectionPartyModel
                             {
+                                ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
                                 ElectionPartyLogoUrl = reader.GetString(reader.GetOrdinal("electionpartyprofileurl")),
                                 ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
                                 VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
@@ -94,6 +96,7 @@ namespace IVS_API.Controllers.Parties
             {
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_ADDNEWPARTY(@partylogourl,@partyname,@createdby)", _connection))
                 {
+
                     cmd.Parameters.AddWithValue("partylogourl", party.ElectionPartyLogoUrl);
                     cmd.Parameters.AddWithValue("partyname", party.ElectionPartyName);
                     cmd.Parameters.AddWithValue("createdby", createdby);
@@ -127,7 +130,7 @@ namespace IVS_API.Controllers.Parties
             }
         }
        
-        [HttpPut("VefifyParty")]
+        [HttpGet("VefifyParty")]
         public IActionResult VefifyParty(long partyid,long verifiedby)
         {
             DateTime timeStamp = TimeZoneIST.now();
@@ -170,7 +173,7 @@ namespace IVS_API.Controllers.Parties
             }
         }
 
-        [HttpDelete("DeleteParty")]
+        [HttpGet("DeleteParty")]
         public IActionResult DeleteParty(long partyid, long deletedby)
         {
             DateTime timeStamp = TimeZoneIST.now();
