@@ -8,6 +8,7 @@ using System.Data.Common;
 
 namespace IVS_API.Controllers.StateElections
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     [Authorize]
