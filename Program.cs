@@ -45,11 +45,19 @@ namespace IVS_API
                     }
                 }
             }
-            catch (Exception ex)
+            catch (NpgsqlException ex)
             {
                 Console.WriteLine("-------------------------------------------------------------------------");
                 Console.WriteLine("Database connection error...");
                 Console.WriteLine("Error : " + ex.Message);
+                Console.WriteLine("-------------------------------------------------------------------------");
+
+            }
+            catch (Exception exx)
+            {
+                Console.WriteLine("-------------------------------------------------------------------------");
+                Console.WriteLine("Unkown error...");
+                Console.WriteLine("Error : " + exx.Message);
                 Console.WriteLine("-------------------------------------------------------------------------");
 
             }

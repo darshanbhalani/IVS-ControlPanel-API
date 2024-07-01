@@ -8,10 +8,8 @@ using System.Data.Common;
 
 namespace IVS_API.Controllers.StateElections
 {
-    [Authorize]
     [Route("[controller]")]
     [ApiController]
-    [Authorize]
     public class AssemblyController : ControllerBase
     {
         private readonly NpgsqlConnection _connection;
@@ -27,7 +25,7 @@ namespace IVS_API.Controllers.StateElections
             List<AsseblyModel> asseblies = new List<AsseblyModel>();
             try
             {
-                using (var cmd = new NpgsqlCommand("SELECT * FROM ivs_stateassemblies_getallstateassemblies(@stateid)", _connection))
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEASSEMBLIES_GETALLSTATEASSEMBLIES(@stateid)", _connection))
                 {
                     cmd.Parameters.AddWithValue("stateid", stateid);
                     using (var reader = cmd.ExecuteReader())
@@ -38,7 +36,9 @@ namespace IVS_API.Controllers.StateElections
                                 {
                                     AsseblyId = reader.GetInt32(reader.GetOrdinal("stateassemblyid")),
                                     AsseblyName = reader.GetString(reader.GetOrdinal("stateassemblyname")),
-                                    AsseblyDistrict = reader.GetString(reader.GetOrdinal("districtname"))
+                                    AsseblyDistrict = reader.GetString(reader.GetOrdinal("districtname")),
+                                    FusionDistrictId = reader.GetString(reader.GetOrdinal("fusiondistrictid")),
+                                    TotalVoters = reader.GetInt64(reader.GetOrdinal("totalvoters"))
                                 });
                             }
                     }
