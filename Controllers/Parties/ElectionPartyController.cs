@@ -2,7 +2,9 @@
 using IVS_API.Repo.Class;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
+using System.Data;
 
 namespace IVS_API.Controllers.Parties
 {
@@ -33,7 +35,7 @@ namespace IVS_API.Controllers.Parties
                                 parties.Add(new ElectionPartyModel
                                 {
                                     ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
-                                    ElectionPartyLogoUrl = reader.GetString(reader.GetOrdinal("electionpartyprofileurl")),
+                                    ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
                                     ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
                                     VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
                                 });
@@ -68,7 +70,7 @@ namespace IVS_API.Controllers.Parties
                             parties.Add(new ElectionPartyModel
                             {
                                 ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
-                                ElectionPartyLogoUrl = reader.GetString(reader.GetOrdinal("electionpartyprofileurl")),
+                                ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
                                 ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
                                 VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
                             });
@@ -88,18 +90,24 @@ namespace IVS_API.Controllers.Parties
         }
 
         [HttpPost("AddNewParty")]
-        public IActionResult AddNewParty(ElectionPartyModel party, long createdby)
+        public async Task<IActionResult> AddNewParty([FromForm] ElectionPartyModel party,IFormFile image)
         {
             DateTime timeStamp = TimeZoneIST.now();
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
+                if(image != null && image.Length >0) { 
+                    using(var memoryStream = new MemoryStream())
+                    {
+                        await image.CopyToAsync(memoryStream);
+                        party.ElectionPartyLogoUrl= memoryStream.ToArray();
+                    }
+                }
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_ADDNEWPARTY(@partylogourl,@partyname,@createdby)", _connection))
                 {
-
-                    cmd.Parameters.AddWithValue("partylogourl", party.ElectionPartyLogoUrl);
+                    cmd.Parameters.AddWithValue("partylogourl", NpgsqlTypes.NpgsqlDbType.Bytea, party.ElectionPartyLogoUrl);
                     cmd.Parameters.AddWithValue("partyname", party.ElectionPartyName);
-                    cmd.Parameters.AddWithValue("createdby", createdby);
+                    cmd.Parameters.AddWithValue("createdby", 1);
                     using (var reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -110,23 +118,30 @@ namespace IVS_API.Controllers.Parties
                             }
                             else
                             {
-                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to add Party." } });
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
                             }
                         }
                         else
                         {
-                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to add Party." } });
+                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
                         }
                     }
                 }
             }
             catch (NpgsqlException pex)
             {
-                return Ok(new { success = false, error = pex.Message });
+                if (pex.SqlState == "23505")
+                {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Party is already exist with same name." } });
+                }
+                else
+                {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
+                }
             }
             catch (Exception ex)
             {
-                return Ok(new { success = false, error = ex.Message });
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
             }
         }
        

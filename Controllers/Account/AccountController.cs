@@ -44,7 +44,7 @@ namespace IVS_API.Controllers.Account
                         }
                         else
                         {
-                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Invalid UserCode or Password."} });
+                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() },  error = "Invalid UserCode or Password."});
                         }
                     }
                 }
@@ -85,7 +85,7 @@ namespace IVS_API.Controllers.Account
                         }
                         else
                         {
-                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to fetch user profile data." } });
+                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, error = "Unable to fetch user profile data."  });
                         }
                     }
                 }
