@@ -33,7 +33,7 @@ namespace IVS_API.Controllers.StateElections
                 {
                     using (var memoryStream = new MemoryStream())
                     {
-                        await image.CopyToAsync(memoryStream);
+                        await image.CopyToAsync(memoryStream); 
                         data.ProfileUrl = memoryStream.ToArray();
                     }
                 }
@@ -92,7 +92,6 @@ namespace IVS_API.Controllers.StateElections
             List<StateElectionCandidateModel> candidates = new List<StateElectionCandidateModel>();
             try
             {
-
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_GETALLCANDIDATE(@in_electionid)", _connection))
                 {
                     cmd.Parameters.AddWithValue("in_electionid", electionid);
@@ -108,7 +107,7 @@ namespace IVS_API.Controllers.StateElections
                                      ProfileUrl = reader["stateelectioncandidateprofileurl"] as byte[],
                                      Name = reader.GetString(reader.GetOrdinal("stateelectioncandidatename")),
                                      Gender = reader.GetString(reader.GetOrdinal("stateelectioncandidategender")),
-                                     PartyId = reader.GetInt64(reader.GetOrdinal("stateelectioncandidatepartyid")),
+                                     PartyId = reader.IsDBNull(reader.GetOrdinal("stateelectioncandidatepartyid")) ? (long?)null : reader.GetInt64(reader.GetOrdinal("stateelectioncandidatepartyid")),
                                      PartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
                                      Epic = reader.GetString(reader.GetOrdinal("stateelectioncandidateepic")),
                                      AssemblyId = reader.GetInt32(reader.GetOrdinal("stateelectioncandidateassemblyid")),
