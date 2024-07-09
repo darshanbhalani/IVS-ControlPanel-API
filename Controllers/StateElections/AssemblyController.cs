@@ -18,6 +18,7 @@ namespace IVS_API.Controllers.StateElections
             _connection = connection;
             _connection.Open();
         }
+
         [HttpGet("GetAllAssemblyByState")]
         public IActionResult GetAllAssemblyByState(int stateid)
         {
