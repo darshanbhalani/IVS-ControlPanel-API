@@ -33,7 +33,7 @@ namespace IVS_API.Controllers.StateElections
                 {
                     using (var memoryStream = new MemoryStream())
                     {
-                        await image.CopyToAsync(memoryStream);
+                        await image.CopyToAsync(memoryStream); 
                         data.ProfileUrl = memoryStream.ToArray();
                     }
                 }
@@ -92,7 +92,6 @@ namespace IVS_API.Controllers.StateElections
             List<StateElectionCandidateModel> candidates = new List<StateElectionCandidateModel>();
             try
             {
-
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_GETALLCANDIDATE(@in_electionid)", _connection))
                 {
                     cmd.Parameters.AddWithValue("in_electionid", electionid);

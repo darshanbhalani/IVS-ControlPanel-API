@@ -107,7 +107,11 @@ namespace IVS_API.Controllers.StateElections
             }
             catch (NpgsqlException pex)
             {
+<<<<<<< HEAD
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to fetch elections. Some thing went wrong." } });
+=======
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to fetch elections. Some thing went wrong." } });
+>>>>>>> 4ce770d29ddbaacf0919cfd75c7017b197c1f930
             }
             catch (Exception ex)
             {
