@@ -18,7 +18,6 @@
   <ItemGroup>
     <Folder Include="Controllers\CorporationElections\" />
     <Folder Include="Controllers\Employees\" />
-    <Folder Include="Controllers\Dashboard\" />
     <Folder Include="Controllers\ParliamentaryElections\" />
   </ItemGroup>
 
