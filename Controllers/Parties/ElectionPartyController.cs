@@ -1,10 +1,7 @@
 ﻿using IVS_API.Models;
 using IVS_API.Repo.Class;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Npgsql;
-using System.Data;
 
 namespace IVS_API.Controllers.Parties
 {
@@ -30,15 +27,15 @@ namespace IVS_API.Controllers.Parties
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
-                            while (reader.Read())
+                        while (reader.Read())
+                        {
+                            parties.Add(new ElectionPartyModel
                             {
-                                parties.Add(new ElectionPartyModel
-                                {
-                                    ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
-                                    ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
-                                    ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
-                                    VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
-                                });
+                                ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
+                                ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
+                                ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
+                                VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
+                            });
                         }
                     }
                 }
@@ -90,17 +87,18 @@ namespace IVS_API.Controllers.Parties
         }
 
         [HttpPost("AddNewParty")]
-        public async Task<IActionResult> AddNewParty([FromForm] ElectionPartyModel party,IFormFile image)
+        public async Task<IActionResult> AddNewParty([FromForm] ElectionPartyModel party, IFormFile image)
         {
             DateTime timeStamp = TimeZoneIST.now();
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
-                if(image != null && image.Length >0) { 
-                    using(var memoryStream = new MemoryStream())
+                if (image != null && image.Length > 0)
+                {
+                    using (var memoryStream = new MemoryStream())
                     {
                         await image.CopyToAsync(memoryStream);
-                        party.ElectionPartyLogoUrl= memoryStream.ToArray();
+                        party.ElectionPartyLogoUrl = memoryStream.ToArray();
                     }
                 }
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_ADDNEWPARTY(@partylogourl,@partyname,@createdby)", _connection))
@@ -144,9 +142,9 @@ namespace IVS_API.Controllers.Parties
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
             }
         }
-       
+
         [HttpGet("VefifyParty")]
-        public IActionResult VefifyParty(long partyid,long verifiedby)
+        public IActionResult VefifyParty(long partyid, long verifiedby)
         {
             DateTime timeStamp = TimeZoneIST.now();
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
@@ -192,7 +190,6 @@ namespace IVS_API.Controllers.Parties
         public IActionResult DeleteParty(long partyid, long deletedby)
         {
             DateTime timeStamp = TimeZoneIST.now();
-            List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_DELETEPARTY(@partid,@verifiedby)", _connection))
@@ -226,6 +223,83 @@ namespace IVS_API.Controllers.Parties
             catch (Exception ex)
             {
                 return Ok(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPost("UpdateParty")]
+        public async Task<IActionResult> UpdateParty([FromForm] ElectionPartyModel party, IFormFile? image)
+        {
+            DateTime timeStamp = TimeZoneIST.now();
+            try
+            {
+                if (image != null && image.Length > 0)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await image.CopyToAsync(memoryStream);
+                        party.ElectionPartyLogoUrl = memoryStream.ToArray();
+                    }
+                    using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTIES_UPDATEPARTY1(@partid,@logo,@name,@deletedby)", _connection))
+                    {
+                        cmd.Parameters.AddWithValue("partid", party.ElectionPartyId!);
+                        cmd.Parameters.AddWithValue("logo", party.ElectionPartyLogoUrl != null ? (object)party.ElectionPartyLogoUrl : DBNull.Value);
+                        cmd.Parameters.AddWithValue("name", party.ElectionPartyName!);
+                        cmd.Parameters.AddWithValue("deletedby", 1);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                if (reader.GetBoolean(0))
+                                {
+                                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
+                                }
+                                else
+                                {
+                                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+                                }
+                            }
+                            else
+                            {
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTIES_UPDATEPARTY2(@partyid,@name,@deletedby)", _connection))
+                    {
+                        cmd.Parameters.AddWithValue("partyid", party.ElectionPartyId!);
+                        cmd.Parameters.AddWithValue("name", party.ElectionPartyName!);
+                        cmd.Parameters.AddWithValue("deletedby", 1);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                if (reader.GetBoolean(0))
+                                {
+                                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
+                                }
+                                else
+                                {
+                                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+                                }
+                            }
+                            else
+                            {
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (NpgsqlException pex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
             }
         }
     }
