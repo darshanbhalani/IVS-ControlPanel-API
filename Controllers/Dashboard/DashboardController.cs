@@ -24,6 +24,7 @@ namespace IVS_API.Controllers.Dashboard
             DateTime timeStamp = TimeZoneIST.now();
             DashboardModel dashboard = new DashboardModel();
             List<YearWiseVotersModel> voters = new List<YearWiseVotersModel>();
+            List<YearWiseVotersModel> cumulativeVoters = new List<YearWiseVotersModel>();
             CountsModel counts = new CountsModel();
             IVotesModel iVotes = new IVotesModel();
             GenderWiseVotersModel totalVoters = new GenderWiseVotersModel();
@@ -76,6 +77,32 @@ namespace IVS_API.Controllers.Dashboard
                                  }
                                 );
                         }
+
+                        cumulativeVoters = voters.OrderBy(record => record.Year).ToList();
+
+                        long cumulativeMale = 0;
+                        long cumulativeFemale = 0;
+                        long cumulativeOther = 0;
+
+                        foreach (var record in cumulativeVoters)
+                        {
+                            cumulativeMale += record.Male;
+                            cumulativeFemale += record.Female;
+                            cumulativeOther += record.Other;
+
+                            cumulativeVoters.Add(
+                                new YearWiseVotersModel
+                                {
+                                    Male = cumulativeMale,
+                                    Female = cumulativeFemale,
+                                    Other = cumulativeOther,
+                                    Total = cumulativeMale + cumulativeFemale + cumulativeOther,
+                                    Year = record.Year
+                                }
+                            );
+                        }
+
+                        cumulativeVoters = cumulativeVoters.OrderByDescending(record => record.Year).ToList();
                     }
                 }
 
@@ -95,7 +122,7 @@ namespace IVS_API.Controllers.Dashboard
                 }
                 dashboard.Counts = counts;
                 dashboard.GenderWiseVoters = totalVoters;
-                dashboard.YearWiseVoters = voters;
+                dashboard.YearWiseVoters = cumulativeVoters;
                 dashboard.IVotes = iVotes;
 
                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = dashboard } });

@@ -192,5 +192,117 @@ namespace IVS_API.Controllers.StateElections
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to add Party. Some thing went wrong." } });
             }
         }
+
+        [HttpGet("VerifyCandidate")]
+        public IActionResult VerifyCandidate(long candidateId, long verifiedBy)
+        {
+            DateTime timeStamp = TimeZoneIST.now();
+            try
+            {
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_VERIFYCANDIDATE(@in_candidateid, @in_verifiedby)", _connection))
+                {
+                    cmd.Parameters.AddWithValue("in_candidateid", candidateId);
+                    cmd.Parameters.AddWithValue("in_verifiedby", verifiedBy);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if(reader.Read()) { 
+                            if(reader.GetBoolean(0)) {
+                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully verified." } });
+                            }
+                            else
+                            {
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
+                            }
+                        }
+                        return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
+                    }
+                }
+            }
+            catch (NpgsqlException pex)
+            {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
+            }
+        }
+
+        [HttpGet("DeleteCandidate")]
+        public IActionResult DeleteCandidate(long candidateId, long deletedBy)
+        {
+            DateTime timeStamp = TimeZoneIST.now();
+            try
+            {
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_DELETECANDIDATE(@in_candidateid, @in_deletedby)", _connection))
+                {
+                    cmd.Parameters.AddWithValue("in_candidateid", candidateId);
+                    cmd.Parameters.AddWithValue("in_deletedby", deletedBy);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            if (reader.GetBoolean(0))
+                            {
+                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully deleted." } });
+                            }
+                            else
+                            {
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to deleted candidate. Some thing went wrong." } });
+                            }
+                        }
+                        return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to deleted candidate. Some thing went wrong." } });
+                    }
+                }
+            }
+            catch (NpgsqlException pex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to deleted candidate. Some thing went wrong." } });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to deleted candidate. Some thing went wrong." } });
+            }
+        }
+
+        [HttpGet("UpdateCandidate")]
+        public IActionResult UpdateCandidate(long candidateId, long deletedBy)
+        {
+            DateTime timeStamp = TimeZoneIST.now();
+            try
+            {
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_DELETECANDIDATE(@in_candidateid, @in_deletedby)", _connection))
+                {
+                    cmd.Parameters.AddWithValue("in_candidateid", candidateId);
+                    cmd.Parameters.AddWithValue("in_verifiedby", deletedBy);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            if (reader.GetBoolean(0))
+                            {
+                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully deleted." } });
+                            }
+                            else
+                            {
+                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to update candidate. Some thing went wrong." } });
+                            }
+                        }
+                        return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to update candidate. Some thing went wrong." } });
+                    }
+                }
+            }
+            catch (NpgsqlException pex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to update candidate. Some thing went wrong." } });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to update candidate. Some thing went wrong." } });
+            }
+        }
     }
 }
