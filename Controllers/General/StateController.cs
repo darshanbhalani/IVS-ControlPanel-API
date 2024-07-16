@@ -1,4 +1,4 @@
-﻿using IVS_API.Models;
+﻿using IVS_API.Models.StateElection;
 using IVS_API.Repo.Class;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;

@@ -6,7 +6,5 @@
         public string StateName { get; set; }
         public int StateId { get; set;}
         public DateOnly electionDate { get; set; }
-
-
     }
 }

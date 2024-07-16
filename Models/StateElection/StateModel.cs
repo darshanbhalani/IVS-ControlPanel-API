@@ -1,4 +1,4 @@
-﻿namespace IVS_API.Models
+﻿namespace IVS_API.Models.StateElection
 {
     public class StateModel
     {

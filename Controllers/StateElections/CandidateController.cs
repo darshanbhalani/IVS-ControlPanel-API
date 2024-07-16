@@ -1,13 +1,17 @@
-﻿using IVS_API.Models;
+﻿using IVS_API.Hubs;
+using IVS_API.Models;
+using IVS_API.Models.StateElection;
 using IVS_API.Repo.Class;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing.Matching;
+using Microsoft.AspNetCore.SignalR;
 using Npgsql;
 using NpgsqlTypes;
 using System.Data.Common;
 using System.IO;
 using System.Reflection;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IVS_API.Controllers.StateElections
 {
@@ -16,10 +20,12 @@ namespace IVS_API.Controllers.StateElections
     public class CandidateController : ControllerBase
     {
         private readonly NpgsqlConnection _connection;
-        public CandidateController(NpgsqlConnection connection)
+        private readonly IHubContext<ElectionPartyHub> _hubContext;
+        public CandidateController(NpgsqlConnection connection, IHubContext<ElectionPartyHub> hubContext)
         {
             _connection = connection;
             _connection.Open();
+            _hubContext = hubContext;
         }
 
         [HttpPost("AddCandidate")]
@@ -54,6 +60,7 @@ namespace IVS_API.Controllers.StateElections
                         {
                             if (reader.GetBoolean(0))
                             {
+                                await broadcastCandidates(data.ElectionId);
                                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully added." } });
                             }
                             else
@@ -194,7 +201,7 @@ namespace IVS_API.Controllers.StateElections
         }
 
         [HttpGet("VerifyCandidate")]
-        public IActionResult VerifyCandidate(long candidateId, long verifiedBy)
+        public async Task<IActionResult> VerifyCandidate(long candidateId, long verifiedBy,long electionId)
         {
             DateTime timeStamp = TimeZoneIST.now();
             try
@@ -208,6 +215,7 @@ namespace IVS_API.Controllers.StateElections
                     {
                         if(reader.Read()) { 
                             if(reader.GetBoolean(0)) {
+                                await broadcastCandidates(electionId);
                                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully verified." } });
                             }
                             else
@@ -230,7 +238,7 @@ namespace IVS_API.Controllers.StateElections
         }
 
         [HttpGet("DeleteCandidate")]
-        public IActionResult DeleteCandidate(long candidateId, long deletedBy)
+        public async Task<IActionResult> DeleteCandidate(long candidateId, long deletedBy, long electionId)
         {
             DateTime timeStamp = TimeZoneIST.now();
             try
@@ -268,7 +276,7 @@ namespace IVS_API.Controllers.StateElections
         }
 
         [HttpGet("UpdateCandidate")]
-        public IActionResult UpdateCandidate(long candidateId, long deletedBy)
+        public async Task<IActionResult> UpdateCandidate(long candidateId, long deletedBy, long electionId)
         {
             DateTime timeStamp = TimeZoneIST.now();
             try
@@ -302,6 +310,22 @@ namespace IVS_API.Controllers.StateElections
             catch (Exception ex)
             {
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to update candidate. Some thing went wrong." } });
+            }
+        }
+
+        private async Task broadcastCandidates(long electionId)
+        {
+            try
+            {
+                var data = GetAllCandidates(electionId);
+                await _hubContext.Clients.All.SendAsync("Broadcast-Candidates-" + electionId.ToString(), data);
+            }
+            catch (NpgsqlException pex)
+            {
+            }
+            catch (Exception ex)
+            {
+
             }
         }
     }
