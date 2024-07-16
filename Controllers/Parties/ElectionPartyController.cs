@@ -1,7 +1,12 @@
 ﻿using IVS_API.Models;
 using IVS_API.Repo.Class;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Npgsql;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using IVS_API.Hubs;
 
 namespace IVS_API.Controllers.Parties
 {
@@ -10,14 +15,17 @@ namespace IVS_API.Controllers.Parties
     public class ElectionPartyController : ControllerBase
     {
         private readonly NpgsqlConnection _connection;
-        public ElectionPartyController(NpgsqlConnection connection)
+        private readonly IHubContext<ElectionPartyHub> _hubContext;
+
+        public ElectionPartyController(NpgsqlConnection connection, IHubContext<ElectionPartyHub> hubContext)
         {
             _connection = connection;
             _connection.Open();
+            _hubContext = hubContext;
         }
 
         [HttpGet("GetAllParties")]
-        public IActionResult GetAllParties()
+        public async Task<IActionResult> GetAllParties()
         {
             DateTime timeStamp = TimeZoneIST.now();
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
@@ -39,6 +47,7 @@ namespace IVS_API.Controllers.Parties
                         }
                     }
                 }
+
                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = parties } });
             }
             catch (NpgsqlException pex)
@@ -52,7 +61,7 @@ namespace IVS_API.Controllers.Parties
         }
 
         [HttpGet("GetAllVerifiedParties")]
-        public IActionResult GetAllVerifiedParties()
+        public async Task<IActionResult> GetAllVerifiedParties()
         {
             DateTime timeStamp = TimeZoneIST.now();
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
@@ -74,6 +83,7 @@ namespace IVS_API.Controllers.Parties
                         }
                     }
                 }
+
                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = parties } });
             }
             catch (NpgsqlException pex)
@@ -97,7 +107,7 @@ namespace IVS_API.Controllers.Parties
                 {
                     using (var memoryStream = new MemoryStream())
                     {
-                        await image.CopyToAsync(memoryStream);
+                        await BroadcastUpdatedParties();
                         party.ElectionPartyLogoUrl = memoryStream.ToArray();
                     }
                 }
@@ -112,6 +122,7 @@ namespace IVS_API.Controllers.Parties
                         {
                             if (reader.GetBoolean(0))
                             {
+                                await BroadcastUpdatedParties();
                                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party successfully added." } });
                             }
                             else
@@ -143,11 +154,11 @@ namespace IVS_API.Controllers.Parties
             }
         }
 
-        [HttpGet("VefifyParty")]
-        public IActionResult VefifyParty(long partyid, long verifiedby)
+        [HttpGet("VerifyParty")]
+        public async Task<IActionResult> VerifyParty(long partyid, long verifiedby)
         {
+            bool success = false;
             DateTime timeStamp = TimeZoneIST.now();
-            List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_VERIFYPARTY(@partid,@verifiedby)", _connection))
@@ -158,22 +169,22 @@ namespace IVS_API.Controllers.Parties
                     {
                         if (reader.Read())
                         {
-                            if (reader.GetBoolean(0))
-                            {
-                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party successfully verified." } });
-
-                            }
-                            else
-                            {
-                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to verify Party." } });
-                            }
-
+                            success = reader.GetBoolean(0);
                         }
                         else
                         {
                             return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to verify Party." } });
                         }
                     }
+                }
+                if (success)
+                {
+                    await BroadcastUpdatedParties();
+                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party successfully verified." } });
+                }
+                else
+                {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to verify Party." } });
                 }
             }
             catch (NpgsqlException pex)
@@ -187,8 +198,9 @@ namespace IVS_API.Controllers.Parties
         }
 
         [HttpGet("DeleteParty")]
-        public IActionResult DeleteParty(long partyid, long deletedby)
+        public async Task<IActionResult> DeleteParty(long partyid, long deletedby)
         {
+            bool success = false;
             DateTime timeStamp = TimeZoneIST.now();
             try
             {
@@ -200,20 +212,22 @@ namespace IVS_API.Controllers.Parties
                     {
                         if (reader.Read())
                         {
-                            if (reader.GetBoolean(0))
-                            {
-                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party successfully deleted." } });
-                            }
-                            else
-                            {
-                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to delete Party." } });
-                            }
+                            success = reader.GetBoolean(0);
                         }
                         else
                         {
                             return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to delete Party." } });
                         }
                     }
+                }
+                if (success)
+                {
+                    await BroadcastUpdatedParties();
+                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party successfully deleted." } });
+                }
+                else
+                {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to delete Party." } });
                 }
             }
             catch (NpgsqlException pex)
@@ -229,6 +243,7 @@ namespace IVS_API.Controllers.Parties
         [HttpPost("UpdateParty")]
         public async Task<IActionResult> UpdateParty([FromForm] ElectionPartyModel party, IFormFile? image)
         {
+            bool success = false;
             DateTime timeStamp = TimeZoneIST.now();
             try
             {
@@ -249,20 +264,22 @@ namespace IVS_API.Controllers.Parties
                         {
                             if (reader.Read())
                             {
-                                if (reader.GetBoolean(0))
-                                {
-                                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
-                                }
-                                else
-                                {
-                                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
-                                }
+                                success = reader.GetBoolean(0);
                             }
                             else
                             {
                                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
                             }
                         }
+                    }
+                    if (success)
+                    {
+                        await BroadcastUpdatedParties();
+                        return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
+                    }
+                    else
+                    {
+                        return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
                     }
                 }
                 else
@@ -276,14 +293,7 @@ namespace IVS_API.Controllers.Parties
                         {
                             if (reader.Read())
                             {
-                                if (reader.GetBoolean(0))
-                                {
-                                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
-                                }
-                                else
-                                {
-                                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
-                                }
+                                success = reader.GetBoolean(0);
                             }
                             else
                             {
@@ -291,7 +301,16 @@ namespace IVS_API.Controllers.Parties
                             }
                         }
                     }
-                }
+                        if (success)
+                        {
+                            await BroadcastUpdatedParties();
+                            return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Party details successfully updated." } });
+                        }
+                        else
+                        {
+                            return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+                        }
+                    }
             }
             catch (NpgsqlException pex)
             {
@@ -300,6 +319,41 @@ namespace IVS_API.Controllers.Parties
             catch (Exception ex)
             {
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Unable to update Party." } });
+            }
+        }
+
+        private async Task BroadcastUpdatedParties()
+        {
+            DateTime timeStamp = TimeZoneIST.now();
+            List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
+            try
+            {
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_DISPLAYALLPARTIES()", _connection))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            parties.Add(new ElectionPartyModel
+                            {
+                                ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
+                                ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
+                                ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
+                                VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
+                            });
+                        }
+                    }
+                }
+                Console.WriteLine("Brodcasted..........");
+                await _hubContext.Clients.All.SendAsync("PartiesUpdated", parties);
+
+            }
+            catch (NpgsqlException pex)
+            {
+            }
+            catch (Exception ex)
+            {
+
             }
         }
     }

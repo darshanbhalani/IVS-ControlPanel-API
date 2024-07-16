@@ -1,3 +1,4 @@
+using IVS_API.Hubs;
 using IVS_API.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,12 +18,12 @@ namespace IVS_API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            builder.Services.AddSignalR();
             builder.Services.AddCors(
     option =>
     {
         option.AddPolicy(
-        "AllowRequests", builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        "AllowRequests", builder => builder.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader().AllowCredentials());
 
     });
 
@@ -123,8 +124,9 @@ namespace IVS_API
 
             app.UseAuthorization();
 
-
             app.MapControllers();
+
+            app.MapHub<ElectionPartyHub>("/electionPartyHub");
 
             app.Run();
         }

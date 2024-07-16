@@ -43,10 +43,9 @@ namespace IVS_API.Controllers.Dashboard
                         }
                     }
                 }
-                
+
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_DASHBOARD_COUNTVOTERBYGENDER()", _connection))
                 {
-
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -61,7 +60,6 @@ namespace IVS_API.Controllers.Dashboard
 
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_DASHBOARD_COUNTVOTERSYEARWISE()", _connection))
                 {
-
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -78,31 +76,32 @@ namespace IVS_API.Controllers.Dashboard
                                 );
                         }
 
-                        cumulativeVoters = voters.OrderBy(record => record.Year).ToList();
+                        //voters = voters.OrderBy(record => record.Year).ToList();
 
-                        long cumulativeMale = 0;
-                        long cumulativeFemale = 0;
-                        long cumulativeOther = 0;
+                        long cumulativemale = 0;
+                        long cumulativefemale = 0;
+                        long cumulativeother = 0;
 
-                        foreach (var record in cumulativeVoters)
+                        foreach (var record in voters)
                         {
-                            cumulativeMale += record.Male;
-                            cumulativeFemale += record.Female;
-                            cumulativeOther += record.Other;
+                            cumulativemale += record.Male;
+                            cumulativefemale += record.Female;
+                            cumulativeother += record.Other;
 
                             cumulativeVoters.Add(
                                 new YearWiseVotersModel
                                 {
-                                    Male = cumulativeMale,
-                                    Female = cumulativeFemale,
-                                    Other = cumulativeOther,
-                                    Total = cumulativeMale + cumulativeFemale + cumulativeOther,
+                                    Male = cumulativemale,
+                                    Female = cumulativefemale,
+                                    Other = cumulativeother,
+                                    Total = cumulativemale + cumulativefemale + cumulativeother,
                                     Year = record.Year
                                 }
                             );
                         }
 
                         cumulativeVoters = cumulativeVoters.OrderByDescending(record => record.Year).ToList();
+                        cumulativeVoters = cumulativeVoters.GetRange(0,29);
                     }
                 }
 
@@ -120,6 +119,7 @@ namespace IVS_API.Controllers.Dashboard
                         }
                     }
                 }
+
                 dashboard.Counts = counts;
                 dashboard.GenderWiseVoters = totalVoters;
                 dashboard.YearWiseVoters = cumulativeVoters;
@@ -134,6 +134,7 @@ namespace IVS_API.Controllers.Dashboard
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to fetch data. Some thing went wrong." } });
             }
         }
