@@ -324,18 +324,39 @@ namespace IVS_API.Controllers.Parties
 
         private async Task broadcastParties()
         {
+            DateTime timeStamp = TimeZoneIST.now();
+            List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
-                var data = GetAllParties();
-                await _hubContext.Clients.All.SendAsync("Broadcast-Parties", data);
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_DISPLAYALLVERIFIEDPARTIES()", _connection))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            parties.Add(new ElectionPartyModel
+                            {
+                                ElectionPartyId = reader.GetInt64(reader.GetOrdinal("electionpartyid")),
+                                ElectionPartyLogoUrl = reader["electionpartyprofileurl"] as byte[],
+                                ElectionPartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
+                                VerificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname")),
+                            });
+                        }
+                    }
+                }
+                var x = new{ success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = parties } };
+                await _hubContext.Clients.All.SendAsync("Broadcast-Parties", x);
+
             }
             catch (NpgsqlException pex)
             {
+               
             }
             catch (Exception ex)
             {
-
+               
             }
+           
         }
     }
 }
