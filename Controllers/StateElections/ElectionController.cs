@@ -1,15 +1,10 @@
 ﻿using IVS_API.Hubs;
-using IVS_API.Models;
 using IVS_API.Models.StateElection;
 using IVS_API.Repo.Class;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Npgsql;
 using NpgsqlTypes;
-using System;
-using System.IO.Pipelines;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IVS_API.Controllers.StateElections
 {
@@ -185,6 +180,7 @@ namespace IVS_API.Controllers.StateElections
         [HttpPost("SheduleStateElection")]
         public async Task<IActionResult> SheduleStateElection(IN_StateElectionModel data)
         {
+            data.ElectionDate = data.ElectionDate.Split('T')[0];
             DateTime timeStamp = TimeZoneIST.now();
             try
             {
