@@ -328,7 +328,7 @@ namespace IVS_API.Controllers.Parties
             List<ElectionPartyModel> parties = new List<ElectionPartyModel>();
             try
             {
-                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_DISPLAYALLVERIFIEDPARTIES()", _connection))
+                using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_PARTY_DISPLAYALLPARTIES()", _connection))
                 {
                     using (var reader = cmd.ExecuteReader())
                     {

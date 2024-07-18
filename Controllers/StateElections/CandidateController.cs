@@ -204,6 +204,7 @@ namespace IVS_API.Controllers.StateElections
         public async Task<IActionResult> VerifyCandidate(long candidateId, long verifiedBy,long electionId)
         {
             DateTime timeStamp = TimeZoneIST.now();
+            bool success = false;
             try
             {
                 using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_VERIFYCANDIDATE(@in_candidateid, @in_verifiedby)", _connection))
@@ -213,18 +214,19 @@ namespace IVS_API.Controllers.StateElections
 
                     using (var reader = cmd.ExecuteReader())
                     {
-                        if(reader.Read()) { 
-                            if(reader.GetBoolean(0)) {
-                                await broadcastCandidates(electionId);
-                                return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully verified." } });
-                            }
-                            else
-                            {
-                                return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
-                            }
+                        if(reader.Read()) {
+                            success = reader.GetBoolean(0);
                         }
-                        return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
                     }
+                }
+                if (success)
+                {
+                    await broadcastCandidates(electionId);
+                    return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { message = "Candidate successfully verified." } });
+                }
+                else
+                {
+                    return Ok(new { success = false, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { error = "Unable to verify candidate. Some thing went wrong." } });
                 }
             }
             catch (NpgsqlException pex)
@@ -317,8 +319,38 @@ namespace IVS_API.Controllers.StateElections
         {
             try
             {
-                var data = GetAllCandidates(electionId);
-                await _hubContext.Clients.All.SendAsync("Broadcast-Candidates-" + electionId.ToString(), data);
+                DateTime timeStamp = TimeZoneIST.now();
+                List<StateElectionCandidateModel> candidates = new List<StateElectionCandidateModel>();
+                    using (var cmd = new NpgsqlCommand("SELECT * FROM IVS_STATEELECTIONCANDIDATES_GETALLCANDIDATE(@in_electionid)", _connection))
+                    {
+                        cmd.Parameters.AddWithValue("in_electionid", electionId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                candidates.Add(
+                                     new StateElectionCandidateModel
+                                     {
+                                         Id = reader.GetInt64(reader.GetOrdinal("stateelectioncandidateid")),
+                                         ProfileUrl = reader["stateelectioncandidateprofileurl"] as byte[],
+                                         Name = reader.GetString(reader.GetOrdinal("stateelectioncandidatename")),
+                                         Gender = reader.GetString(reader.GetOrdinal("stateelectioncandidategender")),
+                                         PartyId = reader.IsDBNull(reader.GetOrdinal("stateelectioncandidatepartyid")) ? (long?)null : reader.GetInt64(reader.GetOrdinal("stateelectioncandidatepartyid")),
+                                         PartyName = reader.GetString(reader.GetOrdinal("electionpartyname")),
+                                         Epic = reader.GetString(reader.GetOrdinal("stateelectioncandidateepic")),
+                                         AssemblyId = reader.GetInt32(reader.GetOrdinal("stateelectioncandidateassemblyid")),
+                                         AssemblyName = reader.GetString(reader.GetOrdinal("stateassemblyname")),
+                                         verificationStatus = reader.GetString(reader.GetOrdinal("verificationstatusname"))
+                                     }
+                                    );
+                            }
+                        }
+                    }
+                    var x = new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = candidates } };
+
+                    await _hubContext.Clients.All.SendAsync($"Broadcast-Candidates-1", x);
+                Console.WriteLine($"Broadcast-Candidates-1");
             }
             catch (NpgsqlException pex)
             {
