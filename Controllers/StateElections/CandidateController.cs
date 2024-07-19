@@ -349,8 +349,7 @@ namespace IVS_API.Controllers.StateElections
                     }
                     var x = new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = candidates } };
 
-                    await _hubContext.Clients.All.SendAsync($"Broadcast-Candidates-1", x);
-                Console.WriteLine($"Broadcast-Candidates-1");
+                    await _hubContext.Clients.All.SendAsync($"Broadcast-Candidates-{electionId}", x);
             }
             catch (NpgsqlException pex)
             {

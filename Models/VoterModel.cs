@@ -7,7 +7,7 @@
         public string VoterName { get; set; }
         public string VoterFatherName { get; set; }
         public long VoterPhoneNumber { get; set; }
-        public DateTime VoterBirthDate { get; set; }
+        public DateOnly VoterBirthDate { get; set; }
         public string VoterGender { get; set; }
         public string VoterAddress { get; set; }
         public int VoterAssemblyId { get; set; }
@@ -15,6 +15,6 @@
         public int VoterDistrictId { get; set; }
         public string DistrictName { get; set; }
         public DateTime IssuedOn { get; set; }
-        public DateTime ApprovedOn { get; set; }
+        public DateTime? ApprovedOn { get; set; }
     }
 }
