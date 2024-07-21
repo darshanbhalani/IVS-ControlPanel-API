@@ -9,5 +9,6 @@
         public int? StateId { get; set; }
         public DateOnly? ElectionDate { get; set; }
         public int? VerificationStatus { get; set; }
+        public string? VerificationStatusName { get; set; }
     }
 }

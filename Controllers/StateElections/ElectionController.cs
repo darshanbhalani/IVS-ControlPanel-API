@@ -43,7 +43,8 @@ namespace IVS_API.Controllers.StateElections
                                 StateName = reader.GetString(reader.GetOrdinal("statename")),
                                 StateId = reader.GetInt32(reader.GetOrdinal("stateid")),
                                 ElectionDate = DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("electiondate"))),
-                                VerificationStatus = reader.GetInt32(reader.GetOrdinal("verificationstatus"))
+                                VerificationStatus = reader.GetInt32(reader.GetOrdinal("verificationstatus")),
+                                VerificationStatusName = reader.GetString(reader.GetOrdinal("verificationstatusname")),
                             });
                         }
                         return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data = elections } });
