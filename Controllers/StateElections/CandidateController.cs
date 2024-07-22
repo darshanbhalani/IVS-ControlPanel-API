@@ -181,7 +181,6 @@ namespace IVS_API.Controllers.StateElections
                     }
                 }
                 return Ok(new { success = true, header = new { requestTime = timeStamp, responsTime = TimeZoneIST.now() }, body = new { data=candidates} });
-                        
             }
             catch (NpgsqlException pex)
             {
